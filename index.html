@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Libro de Gastos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#060B16;
+    --card:#0E1A2E;
+    --card-alt:#132340;
+    --border: rgba(140,170,220,0.16);
+    --border-strong: rgba(140,170,220,0.3);
+    --text:#E7ECF6;
+    --text-dim: rgba(231,236,246,0.56);
+    --text-faint: rgba(231,236,246,0.34);
+    --blue:#5B8DEF;
+    --blue-soft: rgba(91,141,239,0.16);
+    --gold:#C9A24B;
+    --rose:#C1707A;
+    --shadow: 0 24px 60px rgba(0,0,0,0.55);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 20% -10%, rgba(91,141,239,0.14), transparent 45%),
+      var(--bg);
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: 26px 12px 60px;
+  }
+  .receipt{
+    width:100%;
+    max-width:430px;
+    background: linear-gradient(180deg, var(--card), #0B1526);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    position:relative;
+    padding-bottom: 26px;
+    overflow:hidden;
+  }
+  .gold-line{
+    height:2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity:0.75;
+  }
+  .head{
+    padding: 28px 26px 16px;
+    text-align:center;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform:uppercase;
+  }
+  .head h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size: 32px;
+    margin: 6px 0 2px;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+  .head .sub{
+    font-size:12px;
+    color: var(--text-faint);
+  }
+
+  .month-nav{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    padding: 18px 20px 4px;
+  }
+  .month-nav button{
+    background:var(--card-alt);
+    border:1px solid var(--border);
+    color:var(--text);
+    width:32px;height:32px;
+    border-radius:50%;
+    font-size:16px;
+    cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .month-nav button:active{ background: var(--blue-soft); }
+  .month-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing: 2px;
+    text-transform:uppercase;
+    color: var(--text-dim);
+    min-width:150px;
+    text-align:center;
+  }
+
+  .total-block{
+    text-align:center;
+    padding: 14px 20px 22px;
+  }
+  .total-block .label{
+    font-size:10.5px;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color: var(--text-faint);
+  }
+  .total-block .amount{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 46px;
+    font-weight:600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    color: var(--text);
+  }
+  .total-block .amount span.cents{ font-size: 22px; color: var(--gold); }
+  .total-block .meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color: var(--text-faint);
+    margin-top: 4px;
+  }
+
+  .add-form{
+    margin: 0 20px 18px;
+    background: var(--card-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .add-form .row{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .add-form input, .add-form select{
+    font-family:'IBM Plex Sans', sans-serif;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    padding: 10px 10px;
+    font-size:14px;
+    color: var(--text);
+    width:100%;
+    outline:none;
+  }
+  .add-form input:focus, .add-form select:focus{ border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
+  .add-form input::placeholder{ color: var(--text-faint); }
+  .amount-field{ flex: 0 0 96px; }
+  .amount-field input{ font-family:'IBM Plex Mono', monospace; text-align:right; }
+  .desc-field{ flex:1; }
+  .add-form select{ flex:1; -webkit-appearance:none; appearance:none; }
+  .add-btn{
+    width:100%;
+    border:none;
+    border-radius: 8px;
+    background: var(--blue);
+    color: #08132A;
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    font-weight:600;
+    font-size:12px;
+    padding: 12px;
+    cursor:pointer;
+  }
+  .add-btn:active{ background:#4776CE; }
+
+  .section-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color: var(--text-faint);
+    padding: 4px 20px;
+    display:flex;
+    justify-content:space-between;
+  }
+
+  .entries{
+    margin: 0 20px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .entry{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .entry .desc{
+    flex:1;
+    min-width:0;
+  }
+  .entry .desc .d{
+    font-size:14px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    color: var(--text);
+  }
+  .entry .desc .c{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    color: var(--gold);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .entry .amt{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    font-weight:600;
+    white-space:nowrap;
+    color: var(--text);
+  }
+  .entry .del{
+    background:none;
+    border:none;
+    color: var(--rose);
+    font-size:15px;
+    cursor:pointer;
+    padding:2px 4px;
+    line-height:1;
+    opacity:0.75;
+  }
+  .empty-msg{
+    text-align:center;
+    font-size:13px;
+    color: var(--text-faint);
+    padding: 24px 20px;
+    font-style: italic;
+  }
+
+  .dashboard{
+    margin: 6px 20px 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .dash-group{ margin-bottom: 14px; }
+  .bar-row{
+    margin-bottom: 12px;
+  }
+  .bar-row .bar-top{
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    margin-bottom:4px;
+  }
+  .bar-row .bar-top .cat{ font-weight:600; color: var(--text); }
+  .bar-row .bar-top .val{
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--text-dim);
+    font-size:11px;
+  }
+  .bar-track{
+    height:7px;
+    background: var(--card-alt);
+    border-radius: 4px;
+    position:relative;
+    overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .bar-fill.blue{ background: linear-gradient(90deg, #3E6BD6, var(--blue)); }
+  .bar-fill.gold{ background: linear-gradient(90deg, #8E7024, var(--gold)); }
+
+  .export-row{
+    margin: 4px 20px 6px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .export-btn{
+    width:100%;
+    background:none;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    font-size:11px;
+    padding: 11px;
+    cursor:pointer;
+  }
+  .export-btn:active{ background: var(--card-alt); }
+
+  .foot{
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    letter-spacing:2px;
+    color: var(--text-faint);
+    padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="receipt">
+  <div class="gold-line"></div>
+  <div class="head">
+    <div class="eyebrow">Rendición de cuentas personal</div>
+    <h1>Libro de Gastos</h1>
+    <div class="sub" id="today-label"></div>
+  </div>
+
+  <div class="month-nav">
+    <button id="prev-month">‹</button>
+    <div class="month-label" id="month-label">—</div>
+    <button id="next-month">›</button>
+  </div>
+
+  <div class="total-block">
+    <div class="label">Total gastado este mes</div>
+    <div class="amount" id="month-total">S/ 0<span class="cents">.00</span></div>
+    <div class="meta" id="month-meta">0 movimientos</div>
+  </div>
+
+  <div class="add-form">
+    <div class="row">
+      <div class="amount-field"><input id="in-amount" type="number" inputmode="decimal" step="0.01" placeholder="S/"></div>
+      <div class="desc-field"><input id="in-desc" type="text" placeholder="Descripción breve"></div>
+    </div>
+    <div class="row">
+      <select id="in-cat">
+        <option>Servicios básicos</option>
+        <option>Telefonía</option>
+        <option>Streaming / suscripciones</option>
+        <option>Alimentación / mercado</option>
+        <option>Salidas</option>
+        <option>Pareja</option>
+        <option>Personal</option>
+        <option>Salud</option>
+        <option>Transporte</option>
+        <option>Otro</option>
+      </select>
+    </div>
+    <button class="add-btn" id="add-entry">+ Registrar gasto</button>
+  </div>
+
+  <div class="section-title"><span>Movimientos</span><span id="entries-count"></span></div>
+  <div class="entries" id="entries-list"></div>
+
+  <div class="dashboard">
+    <div class="dash-group">
+      <div class="section-title" style="padding-left:0;padding-right:0;"><span>Por área</span></div>
+      <div id="bars-area"></div>
+    </div>
+    <div class="dash-group">
+      <div class="section-title" style="padding-left:0;padding-right:0;"><span>Por categoría</span></div>
+      <div id="bars-cat"></div>
+    </div>
+  </div>
+
+  <div class="export-row">
+    <button class="export-btn" id="export-csv">⤓ Exportar todo a CSV</button>
+  </div>
+
+  <div class="foot">Guardado en tu cuenta de Claude · privado</div>
+</div>
+
+<script>
+// Pega aquí la URL de tu Google Apps Script (termina en /exec).
+// Mientras esté vacía, la app sigue funcionando con el guardado local de Claude.
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbyMb37bBC1EMuTBqZMvr_HRW_ivxEmDC1UZ0yZ3XAXQ0EL9kvJzjVXYJJB5HkxcGQ0/exec";
+
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const STORAGE_KEY = "gastos_entries";
+
+// Categoría -> Área. Vivienda independiente: luz/agua/internet van juntas en "Servicios básicos" (área Hogar).
+const AREA_MAP = {
+  "Servicios básicos": "Hogar",
+  "Telefonía": "Comunicación",
+  "Streaming / suscripciones": "Comunicación",
+  "Alimentación / mercado": "Alimentación",
+  "Salidas": "Ocio y salidas",
+  "Pareja": "Pareja",
+  "Personal": "Personal",
+  "Salud": "Salud",
+  "Transporte": "Movilidad",
+  "Otro": "Otro"
+};
+
+let entries = [];
+let currentMonthDate = new Date();
+currentMonthDate.setDate(1);
+
+function monthKey(d){
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+}
+
+function formatMoney(n){
+  const fixed = (Math.round(n*100)/100).toFixed(2);
+  const [whole, cents] = fixed.split(".");
+  return {whole, cents};
+}
+
+async function loadEntries(){
+  if(SHEET_URL){
+    try{
+      const res = await fetch(SHEET_URL);
+      entries = await res.json();
+      entries.forEach(e => e.amount = Number(e.amount));
+      return;
+    }catch(e){
+      alert("DEBUG lectura: " + e.message);
+      console.error("No se pudo leer el Google Sheet, usando copia local", e);
+    }
+  }
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    entries = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    entries = [];
+  }
+}
+
+async function persistEntries(){
+  // Guardado local (siempre, como respaldo/cache)
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(entries), false);
+  }catch(e){
+    console.error("No se pudo guardar localmente", e);
+  }
+}
+
+async function sendToSheet(payload){
+  if(!SHEET_URL) return;
+  try{
+    const res = await fetch(SHEET_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    const text = await res.text();
+    if(!res.ok){
+      alert("DEBUG escritura (status " + res.status + "): " + text);
+    }
+  }catch(e){
+    alert("DEBUG escritura: " + e.message);
+    console.error("No se pudo escribir en el Google Sheet", e);
+  }
+}
+
+function entriesForCurrentMonth(){
+  const mk = monthKey(currentMonthDate);
+  return entries.filter(e => e.date.slice(0,7) === mk);
+}
+
+function render(){
+  document.getElementById("today-label").textContent =
+    new Date().toLocaleDateString('es-PE', { day:'numeric', month:'long', year:'numeric' });
+
+  document.getElementById("month-label").textContent =
+    MESES[currentMonthDate.getMonth()] + " " + currentMonthDate.getFullYear();
+
+  const monthEntries = entriesForCurrentMonth().sort((a,b)=> b.date.localeCompare(a.date));
+  const total = monthEntries.reduce((s,e)=> s + e.amount, 0);
+  const {whole, cents} = formatMoney(total);
+  document.getElementById("month-total").innerHTML = "S/ " + whole + '<span class="cents">.' + cents + '</span>';
+  document.getElementById("month-meta").textContent =
+    monthEntries.length + (monthEntries.length===1 ? " movimiento" : " movimientos");
+  document.getElementById("entries-count").textContent = monthEntries.length + " reg.";
+
+  const listEl = document.getElementById("entries-list");
+  listEl.innerHTML = "";
+  if(monthEntries.length === 0){
+    listEl.innerHTML = '<div class="empty-msg">Aún no registras gastos este mes.<br>Agrega el primero arriba.</div>';
+  } else {
+    monthEntries.forEach(e=>{
+      const row = document.createElement("div");
+      row.className = "entry";
+      const day = new Date(e.date).toLocaleDateString('es-PE', {day:'2-digit', month:'2-digit'});
+      row.innerHTML = `
+        <div class="desc">
+          <div class="d">${escapeHtml(e.desc || "(sin descripción)")}</div>
+          <div class="c">${escapeHtml(e.category)} · ${day}</div>
+        </div>
+        <div class="amt">S/ ${e.amount.toFixed(2)}</div>
+        <button class="del" data-id="${e.id}">✕</button>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+
+  renderBars(monthEntries, total);
+}
+
+function renderBars(monthEntries, total){
+  // Por categoría
+  const byCat = {};
+  monthEntries.forEach(e=>{
+    byCat[e.category] = (byCat[e.category]||0) + e.amount;
+  });
+  renderBarGroup("bars-cat", byCat, total, "blue");
+
+  // Por área (agrupando categorías afines)
+  const byArea = {};
+  monthEntries.forEach(e=>{
+    const area = AREA_MAP[e.category] || "Otro";
+    byArea[area] = (byArea[area]||0) + e.amount;
+  });
+  renderBarGroup("bars-area", byArea, total, "gold");
+}
+
+function renderBarGroup(elId, dataObj, total, colorClass){
+  const entriesArr = Object.entries(dataObj).sort((a,b)=> b[1]-a[1]);
+  const el = document.getElementById(elId);
+  el.innerHTML = "";
+  if(entriesArr.length === 0){
+    el.innerHTML = '<div class="empty-msg" style="padding:10px 0;">Sin datos aún.</div>';
+    return;
+  }
+  const max = entriesArr[0][1];
+  entriesArr.forEach(([label, val])=>{
+    const pct = total > 0 ? (val/total*100).toFixed(0) : 0;
+    const widthPct = max > 0 ? (val/max*100) : 0;
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    row.innerHTML = `
+      <div class="bar-top">
+        <span class="cat">${escapeHtml(label)}</span>
+        <span class="val">S/ ${val.toFixed(2)} · ${pct}%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill ${colorClass}" style="width:${widthPct}%"></div></div>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function escapeHtml(str){
+  const d = document.createElement("div");
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+document.getElementById("add-entry").addEventListener("click", async ()=>{
+  const amountInput = document.getElementById("in-amount");
+  const descInput = document.getElementById("in-desc");
+  const catInput = document.getElementById("in-cat");
+
+  const amount = parseFloat(amountInput.value);
+  if(!amount || amount <= 0){
+    amountInput.focus();
+    amountInput.style.borderColor = "var(--rose)";
+    setTimeout(()=> amountInput.style.borderColor = "", 800);
+    return;
+  }
+
+  const now = new Date();
+  now.setFullYear(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), Math.min(now.getDate(), 28));
+
+  const newEntry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    amount: amount,
+    desc: descInput.value.trim(),
+    category: catInput.value,
+    date: now.toISOString()
+  };
+  entries.push(newEntry);
+
+  amountInput.value = "";
+  descInput.value = "";
+  await persistEntries();
+  await sendToSheet(Object.assign({ action: "add" }, newEntry));
+  render();
+  descInput.focus();
+});
+
+document.getElementById("entries-list").addEventListener("click", async (e)=>{
+  const btn = e.target.closest(".del");
+  if(!btn) return;
+  const id = btn.getAttribute("data-id");
+  entries = entries.filter(x=> x.id !== id);
+  await persistEntries();
+  await sendToSheet({ action: "delete", id: id });
+  render();
+});
+
+document.getElementById("prev-month").addEventListener("click", ()=>{
+  currentMonthDate.setMonth(currentMonthDate.getMonth()-1);
+  render();
+});
+document.getElementById("next-month").addEventListener("click", ()=>{
+  currentMonthDate.setMonth(currentMonthDate.getMonth()+1);
+  render();
+});
+
+function toCsv(rows){
+  const header = ["Fecha","Descripcion","Categoria","Area","Monto (S/)"];
+  const lines = [header.join(",")];
+  rows.forEach(e=>{
+    const fecha = e.date.slice(0,10);
+    const desc = '"' + (e.desc||"").replace(/"/g,'""') + '"';
+    const cat = '"' + e.category.replace(/"/g,'""') + '"';
+    const area = '"' + (AREA_MAP[e.category] || "Otro") + '"';
+    lines.push([fecha, desc, cat, area, e.amount.toFixed(2)].join(","));
+  });
+  return lines.join("\n");
+}
+
+document.getElementById("export-csv").addEventListener("click", ()=>{
+  if(entries.length === 0){
+    alert("Todavía no tienes gastos registrados para exportar.");
+    return;
+  }
+  const sorted = [...entries].sort((a,b)=> a.date.localeCompare(b.date));
+  const csv = toCsv(sorted);
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = "gastos_" + stamp + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+(async function init(){
+  await loadEntries();
+  render();
+})();
+</script>
+</body>
+</html>
