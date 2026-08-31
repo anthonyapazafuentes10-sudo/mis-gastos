@@ -464,19 +464,36 @@ async function persistEntries(){
   }
 }
 
-async function sendToSheet(payload){
-  if(!SHEET_URL) return;
-  try{
-    await fetch(SHEET_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload)
-    });
-  }catch(e){
-    alert("DEBUG escritura: " + e.message);
-    console.error("No se pudo escribir en el Google Sheet", e);
-  }
+function sendToSheet(payload){
+  if(!SHEET_URL) return Promise.resolve();
+  return new Promise((resolve)=>{
+    const iframeName = "hidden_target_" + Date.now() + "_" + Math.floor(Math.random()*10000);
+    const iframe = document.createElement("iframe");
+    iframe.name = iframeName;
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = SHEET_URL;
+    form.target = iframeName;
+    form.style.display = "none";
+
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "payload";
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    form.submit();
+
+    setTimeout(()=>{
+      form.remove();
+      iframe.remove();
+      resolve();
+    }, 1200);
+  });
 }
 
 function entriesForCurrentMonth(){
