@@ -408,16 +408,43 @@ function formatMoney(n){
   return {whole, cents};
 }
 
+function jsonp(url){
+  return new Promise((resolve, reject)=>{
+    const cbName = "jsonp_cb_" + Date.now() + "_" + Math.floor(Math.random()*100000);
+    const script = document.createElement("script");
+    let timeoutId;
+    window[cbName] = function(data){
+      resolve(data);
+      cleanup();
+    };
+    function cleanup(){
+      clearTimeout(timeoutId);
+      delete window[cbName];
+      script.remove();
+    }
+    script.onerror = function(){
+      reject(new Error("No se pudo cargar el script (red o URL incorrecta)"));
+      cleanup();
+    };
+    timeoutId = setTimeout(()=>{
+      reject(new Error("Tiempo de espera agotado"));
+      cleanup();
+    }, 10000);
+    const sep = url.indexOf("?") >= 0 ? "&" : "?";
+    script.src = url + sep + "callback=" + cbName;
+    document.body.appendChild(script);
+  });
+}
+
 async function loadEntries(){
   if(SHEET_URL){
     try{
-      const res = await fetch(SHEET_URL);
-      entries = await res.json();
+      const data = await jsonp(SHEET_URL);
+      entries = data;
       entries.forEach(e => e.amount = Number(e.amount));
       return;
     }catch(e){
       alert("DEBUG lectura: " + e.message);
-      console.error("No se pudo leer el Google Sheet, usando copia local", e);
     }
   }
   try{
@@ -440,15 +467,12 @@ async function persistEntries(){
 async function sendToSheet(payload){
   if(!SHEET_URL) return;
   try{
-    const res = await fetch(SHEET_URL, {
+    await fetch(SHEET_URL, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload)
     });
-    const text = await res.text();
-    if(!res.ok){
-      alert("DEBUG escritura (status " + res.status + "): " + text);
-    }
   }catch(e){
     alert("DEBUG escritura: " + e.message);
     console.error("No se pudo escribir en el Google Sheet", e);
