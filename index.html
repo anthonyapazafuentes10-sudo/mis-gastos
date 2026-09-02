@@ -76,6 +76,32 @@
     color: var(--text-faint);
   }
 
+  .tabs{
+    display:flex;
+    gap:0;
+    margin: 8px 20px 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow:hidden;
+  }
+  .tab-btn{
+    flex:1;
+    background: var(--card);
+    border:none;
+    color: var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding: 11px 6px;
+    cursor:pointer;
+  }
+  .tab-btn.active{
+    background: var(--blue-soft);
+    color: var(--text);
+  }
+  .tab-btn:not(:last-child){ border-right: 1px solid var(--border); }
+
   .month-nav{
     display:flex;
     align-items:center;
@@ -277,6 +303,116 @@
   .bar-fill.blue{ background: linear-gradient(90deg, #3E6BD6, var(--blue)); }
   .bar-fill.gold{ background: linear-gradient(90deg, #8E7024, var(--gold)); }
 
+  .year-nav{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    padding: 18px 20px 4px;
+  }
+  .year-nav button{
+    background:var(--card-alt);
+    border:1px solid var(--border);
+    color:var(--text);
+    width:32px;height:32px;
+    border-radius:50%;
+    font-size:16px;
+    cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .year-nav button:active{ background: var(--blue-soft); }
+  .year-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing: 2px;
+    color: var(--text);
+    min-width:70px;
+    text-align:center;
+  }
+
+  .pie-wrap{
+    display:flex;
+    justify-content:center;
+    padding: 8px 20px 6px;
+  }
+  .pie-svg{ width: 176px; height: 176px; display:block; }
+  .pie-svg text{ font-family:'IBM Plex Mono', monospace; fill: var(--text); }
+  .pie-center-amt{ font-size:12px; font-weight:600; }
+  .pie-center-label{ font-size:7.5px; fill: var(--text-faint); letter-spacing:1.5px; text-transform:uppercase; }
+
+  .legend-row{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding: 7px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size:12.5px;
+  }
+  .legend-row:last-child{ border-bottom:none; }
+  .legend-dot{
+    width:10px; height:10px;
+    border-radius:50%;
+    flex-shrink:0;
+  }
+  .legend-cat{ flex:1; color: var(--text); }
+  .legend-val{
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--text-dim);
+    font-size:11px;
+    white-space:nowrap;
+  }
+
+  .col-chart{
+    display:flex;
+    align-items:flex-end;
+    gap: 8px;
+    height: 160px;
+    padding: 16px 20px 4px;
+    overflow-x:auto;
+  }
+  .col-chart .col-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-end;
+    height:100%;
+    min-width: 34px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .col-chart .col-val{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    white-space:nowrap;
+  }
+  .col-chart .col-bar{
+    width: 22px;
+    border-radius: 4px 4px 2px 2px;
+    background: linear-gradient(180deg, var(--blue), #2C4C99);
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .col-chart .col-item.selected .col-bar{
+    background: linear-gradient(180deg, var(--gold), #8E7024);
+  }
+  .col-chart .col-item:active .col-bar{ opacity:0.75; }
+  .col-chart .col-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    color: var(--text-faint);
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
+  .col-chart .col-item.selected .col-label{ color: var(--gold); }
+
+  .col-chart .col-item.empty .col-bar{
+    background: var(--card-alt);
+    border: 1px dashed var(--border);
+  }
+  .col-chart .col-item.empty .col-label{ color: var(--text-faint); opacity:0.5; }
+
   .export-row{
     margin: 4px 20px 6px;
     padding-top: 14px;
@@ -317,12 +453,18 @@
     <div class="sub" id="today-label"></div>
   </div>
 
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-mensual">Mensual</button>
+    <button class="tab-btn" id="tab-resumen">Resumen anual</button>
+  </div>
+
   <div class="month-nav">
     <button id="prev-month">‹</button>
     <div class="month-label" id="month-label">—</div>
     <button id="next-month">›</button>
   </div>
 
+  <div id="view-mensual">
   <div class="total-block">
     <div class="label">Total gastado este mes</div>
     <div class="amount" id="month-total">S/ 0<span class="cents">.00</span></div>
@@ -363,6 +505,28 @@
       <div class="section-title" style="padding-left:0;padding-right:0;"><span>Por categoría</span></div>
       <div id="bars-cat"></div>
     </div>
+  </div>
+  </div>
+
+  <div id="view-resumen" style="display:none;">
+    <div class="year-nav">
+      <button id="prev-year">‹</button>
+      <div class="year-label" id="year-nav-label">—</div>
+      <button id="next-year">›</button>
+    </div>
+
+    <div class="total-block">
+      <div class="label" id="year-total-label">Total del año</div>
+      <div class="amount" id="year-total">S/ 0<span class="cents">.00</span></div>
+      <div class="meta" id="year-meta">0 meses con datos</div>
+    </div>
+
+    <div class="section-title" style="padding-left:20px;padding-right:20px;"><span>Gasto por mes</span></div>
+    <div class="col-chart" id="col-chart"></div>
+
+    <div class="section-title" style="padding-left:20px;padding-right:20px;" id="selected-month-title"><span>Toca un mes para ver su detalle</span></div>
+    <div class="pie-wrap" id="pie-chart"></div>
+    <div id="pie-legend"></div>
   </div>
 
   <div class="export-row">
@@ -505,6 +669,10 @@ function render(){
   document.getElementById("today-label").textContent =
     new Date().toLocaleDateString('es-PE', { day:'numeric', month:'long', year:'numeric' });
 
+  if(document.getElementById("view-resumen").style.display !== "none"){
+    renderResumen();
+  }
+
   document.getElementById("month-label").textContent =
     MESES[currentMonthDate.getMonth()] + " " + currentMonthDate.getFullYear();
 
@@ -579,6 +747,181 @@ function renderBarGroup(elId, dataObj, total, colorClass){
       <div class="bar-track"><div class="bar-fill ${colorClass}" style="width:${widthPct}%"></div></div>
     `;
     el.appendChild(row);
+  });
+}
+
+const CATEGORY_LIST = ["Servicios básicos","Telefonía","Streaming / suscripciones","Alimentación / mercado","Salidas","Pareja","Personal","Salud","Transporte","Otro"];
+const CATEGORY_COLORS = ["#5B8DEF","#C9A24B","#6BC7B2","#E0A458","#B85C7A","#8E7CC3","#4FB477","#C1707A","#5FB0C9","#8A93A6"];
+function colorForCategory(cat){
+  const idx = CATEGORY_LIST.indexOf(cat);
+  return CATEGORY_COLORS[idx >= 0 ? idx : CATEGORY_COLORS.length - 1];
+}
+
+const MES_ABBR = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+let selectedResumenMonth = null;
+let selectedResumenYear = null;
+
+document.getElementById("tab-mensual").addEventListener("click", ()=> switchTab("mensual"));
+document.getElementById("tab-resumen").addEventListener("click", ()=> switchTab("resumen"));
+document.getElementById("prev-year").addEventListener("click", ()=>{
+  selectedResumenYear = String(parseInt(selectedResumenYear,10) - 1);
+  selectedResumenMonth = null;
+  renderResumen();
+});
+document.getElementById("next-year").addEventListener("click", ()=>{
+  selectedResumenYear = String(parseInt(selectedResumenYear,10) + 1);
+  selectedResumenMonth = null;
+  renderResumen();
+});
+
+function switchTab(tab){
+  const isMensual = tab === "mensual";
+  document.getElementById("view-mensual").style.display = isMensual ? "" : "none";
+  document.getElementById("view-resumen").style.display = isMensual ? "none" : "";
+  document.getElementById("tab-mensual").classList.toggle("active", isMensual);
+  document.getElementById("tab-resumen").classList.toggle("active", !isMensual);
+  document.querySelector(".month-nav").style.display = isMensual ? "" : "none";
+  if(!isMensual) renderResumen();
+}
+
+function renderResumen(){
+  const byMonthAll = {};
+  entries.forEach(e=>{
+    const mk = e.date.slice(0,7);
+    byMonthAll[mk] = (byMonthAll[mk]||0) + e.amount;
+  });
+  const allMonths = Object.keys(byMonthAll).sort();
+
+  if(!selectedResumenYear){
+    selectedResumenYear = allMonths.length ? allMonths[allMonths.length-1].slice(0,4) : String(new Date().getFullYear());
+  }
+  document.getElementById("year-nav-label").textContent = selectedResumenYear;
+
+  const monthsOfYear = [];
+  for(let m=1; m<=12; m++){
+    monthsOfYear.push(selectedResumenYear + "-" + String(m).padStart(2,"0"));
+  }
+  const yearTotal = monthsOfYear.reduce((s,mk)=> s + (byMonthAll[mk]||0), 0);
+  const monthsWithData = monthsOfYear.filter(mk=> byMonthAll[mk]);
+  const {whole, cents} = formatMoney(yearTotal);
+  document.getElementById("year-total").innerHTML = "S/ " + whole + '<span class="cents">.' + cents + '</span>';
+  document.getElementById("year-meta").textContent = monthsWithData.length + (monthsWithData.length===1 ? " mes con datos" : " meses con datos");
+
+  const chartEl = document.getElementById("col-chart");
+  chartEl.innerHTML = "";
+  const max = Math.max(1, ...monthsOfYear.map(mk=> byMonthAll[mk]||0));
+
+  if(!selectedResumenMonth || !monthsOfYear.includes(selectedResumenMonth) || !byMonthAll[selectedResumenMonth]){
+    selectedResumenMonth = monthsWithData.length ? monthsWithData[monthsWithData.length-1] : null;
+  }
+
+  monthsOfYear.forEach(mk=>{
+    const val = byMonthAll[mk] || 0;
+    const m = parseInt(mk.slice(5,7),10);
+    const heightPct = val > 0 ? Math.max(val/max*100, 6) : 3;
+    const item = document.createElement("div");
+    item.className = "col-item" + (mk === selectedResumenMonth ? " selected" : "") + (val === 0 ? " empty" : "");
+    item.innerHTML = `
+      <div class="col-val">${val > 0 ? val.toFixed(0) : ""}</div>
+      <div class="col-bar" style="height:${heightPct}%"></div>
+      <div class="col-label">${MES_ABBR[m-1]}</div>
+    `;
+    if(val > 0){
+      item.addEventListener("click", ()=>{
+        selectedResumenMonth = mk;
+        renderResumen();
+      });
+    }
+    chartEl.appendChild(item);
+  });
+
+  if(!selectedResumenMonth){
+    document.getElementById("selected-month-title").innerHTML = "<span>Sin gastos registrados en " + selectedResumenYear + "</span>";
+    document.getElementById("pie-chart").innerHTML = "";
+    document.getElementById("pie-legend").innerHTML = "";
+    return;
+  }
+
+  const [sy, sm] = selectedResumenMonth.split("-");
+  document.getElementById("selected-month-title").innerHTML =
+    "<span>Detalle de " + MES_ABBR[parseInt(sm,10)-1] + " " + sy + "</span>";
+
+  const monthEntries = entries.filter(e => e.date.slice(0,7) === selectedResumenMonth);
+  const byCat = {};
+  monthEntries.forEach(e=>{
+    byCat[e.category] = (byCat[e.category]||0) + e.amount;
+  });
+  const monthTotal = monthEntries.reduce((s,e)=> s + e.amount, 0);
+  renderPie(byCat, monthTotal);
+}
+
+function renderPie(byCat, total){
+  const pieEl = document.getElementById("pie-chart");
+  const legendEl = document.getElementById("pie-legend");
+  pieEl.innerHTML = "";
+  legendEl.innerHTML = "";
+
+  const catsArr = Object.entries(byCat).sort((a,b)=> b[1]-a[1]);
+  if(catsArr.length === 0 || total <= 0){
+    pieEl.innerHTML = '<div class="empty-msg" style="padding:16px 0;">Sin gastos este mes.</div>';
+    return;
+  }
+
+  const svgNS = "http://www.w3.org/2000/svg";
+  const r = 45, cx = 60, cy = 60, sw = 20;
+  const circumference = 2 * Math.PI * r;
+  let cumulative = 0;
+
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 120 120");
+  svg.setAttribute("class", "pie-svg");
+
+  const g = document.createElementNS(svgNS, "g");
+  g.setAttribute("transform", "rotate(-90 " + cx + " " + cy + ")");
+
+  catsArr.forEach(([cat, val])=>{
+    const pct = val / total;
+    const dash = pct * circumference;
+    const circle = document.createElementNS(svgNS, "circle");
+    circle.setAttribute("cx", cx);
+    circle.setAttribute("cy", cy);
+    circle.setAttribute("r", r);
+    circle.setAttribute("fill", "none");
+    circle.setAttribute("stroke", colorForCategory(cat));
+    circle.setAttribute("stroke-width", sw);
+    circle.setAttribute("stroke-dasharray", dash + " " + (circumference - dash));
+    circle.setAttribute("stroke-dashoffset", String(-cumulative));
+    g.appendChild(circle);
+    cumulative += dash;
+  });
+  svg.appendChild(g);
+
+  const text1 = document.createElementNS(svgNS, "text");
+  text1.setAttribute("x", cx); text1.setAttribute("y", cy - 2);
+  text1.setAttribute("text-anchor", "middle");
+  text1.setAttribute("class", "pie-center-amt");
+  text1.textContent = "S/ " + total.toFixed(0);
+  svg.appendChild(text1);
+
+  const text2 = document.createElementNS(svgNS, "text");
+  text2.setAttribute("x", cx); text2.setAttribute("y", cy + 12);
+  text2.setAttribute("text-anchor", "middle");
+  text2.setAttribute("class", "pie-center-label");
+  text2.textContent = "total mes";
+  svg.appendChild(text2);
+
+  pieEl.appendChild(svg);
+
+  catsArr.forEach(([cat, val])=>{
+    const pct = (val/total*100).toFixed(0);
+    const row = document.createElement("div");
+    row.className = "legend-row";
+    row.innerHTML = `
+      <span class="legend-dot" style="background:${colorForCategory(cat)}"></span>
+      <span class="legend-cat">${escapeHtml(cat)}</span>
+      <span class="legend-val">S/ ${val.toFixed(2)} · ${pct}%</span>
+    `;
+    legendEl.appendChild(row);
   });
 }
 
