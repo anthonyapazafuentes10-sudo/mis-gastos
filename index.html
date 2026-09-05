@@ -90,10 +90,10 @@
     border:none;
     color: var(--text-dim);
     font-family:'IBM Plex Mono', monospace;
-    font-size:11px;
-    letter-spacing:1px;
+    font-size:9.5px;
+    letter-spacing:0.5px;
     text-transform:uppercase;
-    padding: 11px 6px;
+    padding: 11px 3px;
     cursor:pointer;
   }
   .tab-btn.active{
@@ -413,6 +413,112 @@
   }
   .col-chart .col-item.empty .col-label{ color: var(--text-faint); opacity:0.5; }
 
+  .cat-add-btn{
+    flex: 0 0 42px;
+    background: var(--blue-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--blue);
+    font-size: 18px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .newcat-panel{
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+  }
+  .newcat-panel .row button{ flex:1; font-size:10.5px; padding:10px; }
+
+  .flow-bars{
+    display:flex;
+    gap: 14px;
+    justify-content:center;
+    align-items:flex-end;
+    height: 120px;
+    padding: 6px 20px 18px;
+  }
+  .flow-bars .flow-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-end;
+    height:100%;
+  }
+  .flow-bars .flow-val{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    margin-bottom:4px;
+    color: var(--text-dim);
+  }
+  .flow-bars .flow-bar{
+    width: 46px;
+    border-radius: 6px 6px 3px 3px;
+  }
+  .flow-bars .flow-bar.ingreso{ background: linear-gradient(180deg, var(--gold), #8E7024); }
+  .flow-bars .flow-bar.gasto{ background: linear-gradient(180deg, var(--blue), #2C4C99); }
+  .flow-bars .flow-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color: var(--text-faint);
+    margin-top:6px;
+  }
+
+  .add-form input[type="date"]{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+  }
+
+  .inv-card{
+    margin: 0 20px 14px;
+    background: var(--card-alt);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .inv-card .inv-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:8px;
+  }
+  .inv-card .inv-entidad{
+    font-family:'Cormorant Garamond', serif;
+    font-size:19px;
+    font-weight:600;
+    color: var(--text);
+  }
+  .inv-card .inv-tea{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color: var(--gold);
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .inv-card .inv-del{
+    background:none;border:none;color:var(--rose);font-size:15px;cursor:pointer;opacity:0.8;
+  }
+  .inv-card .inv-values{
+    display:flex;
+    justify-content:space-between;
+    padding: 6px 0 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .inv-card .inv-values .col{ text-align:left; }
+  .inv-card .inv-values .col.right{ text-align:right; }
+  .inv-card .inv-values .lab{
+    font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-faint);
+  }
+  .inv-card .inv-values .val{
+    font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:600; color: var(--text); margin-top:2px;
+  }
+  .inv-card .inv-values .val.gain{ color: var(--gold); }
+  .inv-chart{ height: 70px; }
+  .inv-chart svg{ width:100%; height:100%; display:block; }
+
   .export-row{
     margin: 4px 20px 6px;
     padding-top: 14px;
@@ -455,7 +561,9 @@
 
   <div class="tabs">
     <button class="tab-btn active" id="tab-mensual">Mensual</button>
-    <button class="tab-btn" id="tab-resumen">Resumen anual</button>
+    <button class="tab-btn" id="tab-resumen">Resumen</button>
+    <button class="tab-btn" id="tab-flujo">Flujo</button>
+    <button class="tab-btn" id="tab-taxi">Taxi</button>
   </div>
 
   <div class="month-nav">
@@ -477,19 +585,26 @@
       <div class="desc-field"><input id="in-desc" type="text" placeholder="Descripción breve"></div>
     </div>
     <div class="row">
-      <select id="in-cat">
-        <option>Servicios básicos</option>
-        <option>Telefonía</option>
-        <option>Streaming / suscripciones</option>
-        <option>Alimentación / mercado</option>
-        <option>Salidas</option>
-        <option>Pareja</option>
-        <option>Personal</option>
-        <option>Salud</option>
-        <option>Transporte</option>
-        <option>Otro</option>
-      </select>
+      <select id="in-cat" style="flex:1;"></select>
+      <button type="button" class="cat-add-btn" id="open-newcat">+</button>
     </div>
+
+    <div class="newcat-panel" id="newcat-panel" style="display:none;">
+      <div class="row">
+        <input id="newcat-nombre" type="text" placeholder="Nombre de la categoría">
+      </div>
+      <div class="row">
+        <select id="newcat-area" style="flex:1;"></select>
+      </div>
+      <div class="row" id="newcat-area-custom-row" style="display:none;">
+        <input id="newcat-area-custom" type="text" placeholder="Nombre del área nueva">
+      </div>
+      <div class="row">
+        <button type="button" class="add-btn" id="save-newcat" style="background:var(--gold);color:#08132A;">Guardar categoría</button>
+        <button type="button" class="add-btn" id="cancel-newcat" style="background:var(--card);border:1px solid var(--border);color:var(--text-dim);">Cancelar</button>
+      </div>
+    </div>
+
     <button class="add-btn" id="add-entry">+ Registrar gasto</button>
   </div>
 
@@ -529,6 +644,108 @@
     <div id="pie-legend"></div>
   </div>
 
+  <div id="view-flujo" style="display:none;">
+    <div class="year-nav">
+      <button id="prev-month-flujo">‹</button>
+      <div class="year-label" id="flujo-month-label">—</div>
+      <button id="next-month-flujo">›</button>
+    </div>
+
+    <div class="total-block">
+      <div class="label">Ahorro neto del mes</div>
+      <div class="amount" id="flujo-neto">S/ 0<span class="cents">.00</span></div>
+      <div class="meta" id="flujo-meta">Ingresos S/0 · Gastos S/0</div>
+    </div>
+
+    <div class="flow-bars" id="flow-bars"></div>
+
+    <div class="add-form">
+      <div class="row">
+        <div class="amount-field"><input id="in-ingreso-amount" type="number" inputmode="decimal" step="0.01" placeholder="S/"></div>
+        <div class="desc-field"><input id="in-ingreso-desc" type="text" placeholder="Descripción breve"></div>
+      </div>
+      <div class="row">
+        <select id="in-ingreso-tipo">
+          <option>Fijo (trabajo)</option>
+          <option>Extra</option>
+          <option>Taxi</option>
+        </select>
+      </div>
+      <button class="add-btn" id="add-ingreso" style="background:var(--gold);color:#08132A;">+ Registrar ingreso</button>
+    </div>
+
+    <div class="section-title"><span>Ingresos del mes</span><span id="ingresos-count"></span></div>
+    <div class="entries" id="ingresos-list"></div>
+
+    <div class="section-title" style="padding-top:6px;"><span>Ahorro neto acumulado (todos los meses)</span></div>
+    <div class="col-chart" id="ahorro-chart"></div>
+
+    <div class="section-title" style="border-top:1px solid var(--border);padding-top:16px;"><span>Plazo fijo / Inversiones</span></div>
+
+    <div class="add-form">
+      <div class="row">
+        <input id="inv-entidad" type="text" placeholder="Entidad (ej. BCP, Interbank)">
+      </div>
+      <div class="row">
+        <div class="amount-field" style="flex:1;"><input id="inv-monto" type="number" step="0.01" placeholder="Monto inicial S/"></div>
+        <div class="amount-field" style="flex:0 0 100px;"><input id="inv-tea" type="number" step="0.01" placeholder="TEA %"></div>
+      </div>
+      <div class="row">
+        <input id="inv-fecha-inicio" type="date">
+        <input id="inv-fecha-venc" type="date">
+      </div>
+      <button class="add-btn" id="add-inversion">+ Agregar plazo fijo</button>
+    </div>
+
+    <div id="inversiones-list"></div>
+  </div>
+
+  <div id="view-taxi" style="display:none;">
+    <div class="year-nav">
+      <button id="prev-month-taxi">‹</button>
+      <div class="year-label" id="taxi-month-label">—</div>
+      <button id="next-month-taxi">›</button>
+    </div>
+
+    <div class="total-block">
+      <div class="label">Ganancia neta del taxi</div>
+      <div class="amount" id="taxi-neto">S/ 0<span class="cents">.00</span></div>
+      <div class="meta" id="taxi-meta">Ingresos S/0 · Gastos S/0</div>
+    </div>
+
+    <div class="flow-bars" id="taxi-flow-bars"></div>
+
+    <div class="section-title" style="padding-top:6px;"><span>+ Registrar carrera / ingreso</span></div>
+    <div class="add-form">
+      <div class="row">
+        <div class="amount-field"><input id="taxi-in-amount" type="number" inputmode="decimal" step="0.01" placeholder="S/"></div>
+        <div class="desc-field"><input id="taxi-in-desc" type="text" placeholder="Descripción breve"></div>
+      </div>
+      <button class="add-btn" id="taxi-add-ingreso" style="background:var(--gold);color:#08132A;">+ Registrar ingreso taxi</button>
+    </div>
+
+    <div class="section-title"><span>+ Registrar gasto del taxi</span></div>
+    <div class="add-form">
+      <div class="row">
+        <div class="amount-field"><input id="taxi-gasto-amount" type="number" inputmode="decimal" step="0.01" placeholder="S/"></div>
+        <div class="desc-field"><input id="taxi-gasto-desc" type="text" placeholder="Descripción breve"></div>
+      </div>
+      <div class="row">
+        <select id="taxi-gasto-cat" style="flex:1;"></select>
+      </div>
+      <button class="add-btn" id="taxi-add-gasto">+ Registrar gasto taxi</button>
+    </div>
+    <div class="empty-msg" id="taxi-no-cat-msg" style="display:none;padding:6px 20px 0;">
+      Aún no tienes categorías del área "Taxi". Ve a la pestaña Mensual → botón "+" junto a categoría → crea una con área "Taxi".
+    </div>
+
+    <div class="section-title"><span>Movimientos del mes</span><span id="taxi-count"></span></div>
+    <div class="entries" id="taxi-list"></div>
+
+    <div class="section-title"><span>Gasto taxi por categoría</span></div>
+    <div id="taxi-bars-cat"></div>
+  </div>
+
   <div class="export-row">
     <button class="export-btn" id="export-csv">⤓ Exportar todo a CSV</button>
   </div>
@@ -557,6 +774,53 @@ const AREA_MAP = {
   "Transporte": "Movilidad",
   "Otro": "Otro"
 };
+const BASE_AREAS = ["Hogar","Comunicación","Alimentación","Ocio y salidas","Pareja","Personal","Salud","Movilidad","Taxi","Otro"];
+
+let customCategories = []; // {id, nombre, area}
+const CUSTOM_CAT_STORAGE_KEY = "custom_categorias";
+
+function getArea(cat){
+  if(AREA_MAP[cat]) return AREA_MAP[cat];
+  const custom = customCategories.find(c => c.nombre === cat);
+  return custom ? custom.area : "Otro";
+}
+
+function allCategoryNames(){
+  return [...CATEGORY_LIST, ...customCategories.map(c=> c.nombre)];
+}
+
+function knownAreas(){
+  const areas = new Set(BASE_AREAS);
+  customCategories.forEach(c=> { if(c.area) areas.add(c.area); });
+  return Array.from(areas);
+}
+
+function refreshCategorySelects(){
+  const names = allCategoryNames();
+  const catSelect = document.getElementById("in-cat");
+  const prevVal = catSelect.value;
+  catSelect.innerHTML = names.map(n => `<option>${escapeHtml(n)}</option>`).join("");
+  if(names.includes(prevVal)) catSelect.value = prevVal;
+
+  const areaSelect = document.getElementById("newcat-area");
+  areaSelect.innerHTML = knownAreas().map(a => `<option>${escapeHtml(a)}</option>`).join("")
+    + '<option value="__new__">+ Nueva área…</option>';
+
+  const taxiCats = customCategories.filter(c => c.area === "Taxi").map(c=> c.nombre);
+  const taxiSelect = document.getElementById("taxi-gasto-cat");
+  const noCatMsg = document.getElementById("taxi-no-cat-msg");
+  if(taxiCats.length === 0){
+    taxiSelect.innerHTML = "";
+    taxiSelect.style.display = "none";
+    document.getElementById("taxi-add-gasto").style.display = "none";
+    noCatMsg.style.display = "";
+  } else {
+    taxiSelect.style.display = "";
+    document.getElementById("taxi-add-gasto").style.display = "";
+    noCatMsg.style.display = "none";
+    taxiSelect.innerHTML = taxiCats.map(n => `<option>${escapeHtml(n)}</option>`).join("");
+  }
+}
 
 let entries = [];
 let currentMonthDate = new Date();
@@ -600,12 +864,29 @@ function jsonp(url){
   });
 }
 
+let incomeEntries = [];
+let investments = [];
+const INCOME_STORAGE_KEY = "ingresos_entries";
+const INVEST_STORAGE_KEY = "inversiones_entries";
+
+function sheetUrlWithType(type){
+  const sep = SHEET_URL.indexOf("?") >= 0 ? "&" : "?";
+  return SHEET_URL + sep + "type=" + type;
+}
+
 async function loadEntries(){
   if(SHEET_URL){
     try{
-      const data = await jsonp(SHEET_URL);
-      entries = data;
-      entries.forEach(e => e.amount = Number(e.amount));
+      const [g, i, inv, cats] = await Promise.all([
+        jsonp(sheetUrlWithType("gastos")),
+        jsonp(sheetUrlWithType("ingresos")),
+        jsonp(sheetUrlWithType("inversiones")),
+        jsonp(sheetUrlWithType("categorias"))
+      ]);
+      entries = g; entries.forEach(e => e.amount = Number(e.amount));
+      incomeEntries = i; incomeEntries.forEach(e => e.amount = Number(e.amount));
+      investments = inv; investments.forEach(v => { v.montoInicial = Number(v.montoInicial); v.tea = Number(v.tea); });
+      customCategories = cats;
       return;
     }catch(e){
       alert("DEBUG lectura: " + e.message);
@@ -614,8 +895,26 @@ async function loadEntries(){
   try{
     const res = await window.storage.get(STORAGE_KEY, false);
     entries = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ entries = []; }
+  try{
+    const res = await window.storage.get(INCOME_STORAGE_KEY, false);
+    incomeEntries = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ incomeEntries = []; }
+  try{
+    const res = await window.storage.get(INVEST_STORAGE_KEY, false);
+    investments = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ investments = []; }
+  try{
+    const res = await window.storage.get(CUSTOM_CAT_STORAGE_KEY, false);
+    customCategories = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ customCategories = []; }
+}
+
+async function persistCustomCategories(){
+  try{
+    await window.storage.set(CUSTOM_CAT_STORAGE_KEY, JSON.stringify(customCategories), false);
   }catch(e){
-    entries = [];
+    console.error("No se pudo guardar categorías localmente", e);
   }
 }
 
@@ -625,6 +924,22 @@ async function persistEntries(){
     await window.storage.set(STORAGE_KEY, JSON.stringify(entries), false);
   }catch(e){
     console.error("No se pudo guardar localmente", e);
+  }
+}
+
+async function persistIncome(){
+  try{
+    await window.storage.set(INCOME_STORAGE_KEY, JSON.stringify(incomeEntries), false);
+  }catch(e){
+    console.error("No se pudo guardar ingresos localmente", e);
+  }
+}
+
+async function persistInvestments(){
+  try{
+    await window.storage.set(INVEST_STORAGE_KEY, JSON.stringify(investments), false);
+  }catch(e){
+    console.error("No se pudo guardar inversiones localmente", e);
   }
 }
 
@@ -671,6 +986,12 @@ function render(){
 
   if(document.getElementById("view-resumen").style.display !== "none"){
     renderResumen();
+  }
+  if(document.getElementById("view-flujo").style.display !== "none"){
+    renderFlujo();
+  }
+  if(document.getElementById("view-taxi").style.display !== "none"){
+    renderTaxi();
   }
 
   document.getElementById("month-label").textContent =
@@ -719,7 +1040,7 @@ function renderBars(monthEntries, total){
   // Por área (agrupando categorías afines)
   const byArea = {};
   monthEntries.forEach(e=>{
-    const area = AREA_MAP[e.category] || "Otro";
+    const area = getArea(e.category);
     byArea[area] = (byArea[area]||0) + e.amount;
   });
   renderBarGroup("bars-area", byArea, total, "gold");
@@ -754,7 +1075,10 @@ const CATEGORY_LIST = ["Servicios básicos","Telefonía","Streaming / suscripcio
 const CATEGORY_COLORS = ["#5B8DEF","#C9A24B","#6BC7B2","#E0A458","#B85C7A","#8E7CC3","#4FB477","#C1707A","#5FB0C9","#8A93A6"];
 function colorForCategory(cat){
   const idx = CATEGORY_LIST.indexOf(cat);
-  return CATEGORY_COLORS[idx >= 0 ? idx : CATEGORY_COLORS.length - 1];
+  if(idx >= 0) return CATEGORY_COLORS[idx];
+  const customIdx = customCategories.findIndex(c => c.nombre === cat);
+  if(customIdx >= 0) return CATEGORY_COLORS[customIdx % CATEGORY_COLORS.length];
+  return CATEGORY_COLORS[CATEGORY_COLORS.length - 1];
 }
 
 const MES_ABBR = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
@@ -763,6 +1087,8 @@ let selectedResumenYear = null;
 
 document.getElementById("tab-mensual").addEventListener("click", ()=> switchTab("mensual"));
 document.getElementById("tab-resumen").addEventListener("click", ()=> switchTab("resumen"));
+document.getElementById("tab-flujo").addEventListener("click", ()=> switchTab("flujo"));
+document.getElementById("tab-taxi").addEventListener("click", ()=> switchTab("taxi"));
 document.getElementById("prev-year").addEventListener("click", ()=>{
   selectedResumenYear = String(parseInt(selectedResumenYear,10) - 1);
   selectedResumenMonth = null;
@@ -775,13 +1101,18 @@ document.getElementById("next-year").addEventListener("click", ()=>{
 });
 
 function switchTab(tab){
-  const isMensual = tab === "mensual";
-  document.getElementById("view-mensual").style.display = isMensual ? "" : "none";
-  document.getElementById("view-resumen").style.display = isMensual ? "none" : "";
-  document.getElementById("tab-mensual").classList.toggle("active", isMensual);
-  document.getElementById("tab-resumen").classList.toggle("active", !isMensual);
-  document.querySelector(".month-nav").style.display = isMensual ? "" : "none";
-  if(!isMensual) renderResumen();
+  document.getElementById("view-mensual").style.display = tab === "mensual" ? "" : "none";
+  document.getElementById("view-resumen").style.display = tab === "resumen" ? "" : "none";
+  document.getElementById("view-flujo").style.display = tab === "flujo" ? "" : "none";
+  document.getElementById("view-taxi").style.display = tab === "taxi" ? "" : "none";
+  document.getElementById("tab-mensual").classList.toggle("active", tab === "mensual");
+  document.getElementById("tab-resumen").classList.toggle("active", tab === "resumen");
+  document.getElementById("tab-flujo").classList.toggle("active", tab === "flujo");
+  document.getElementById("tab-taxi").classList.toggle("active", tab === "taxi");
+  document.querySelector(".month-nav").style.display = tab === "mensual" ? "" : "none";
+  if(tab === "resumen") renderResumen();
+  if(tab === "flujo") renderFlujo();
+  if(tab === "taxi") renderTaxi();
 }
 
 function renderResumen(){
@@ -925,11 +1256,323 @@ function renderPie(byCat, total){
   });
 }
 
+let flujoMonthDate = new Date();
+flujoMonthDate.setDate(1);
+
+document.getElementById("prev-month-flujo").addEventListener("click", ()=>{
+  flujoMonthDate.setMonth(flujoMonthDate.getMonth()-1);
+  renderFlujo();
+});
+document.getElementById("next-month-flujo").addEventListener("click", ()=>{
+  flujoMonthDate.setMonth(flujoMonthDate.getMonth()+1);
+  renderFlujo();
+});
+
+function renderFlujo(){
+  const mk = monthKey(flujoMonthDate);
+  document.getElementById("flujo-month-label").textContent =
+    MESES[flujoMonthDate.getMonth()] + " " + flujoMonthDate.getFullYear();
+
+  const monthGastos = entries.filter(e => e.date.slice(0,7) === mk);
+  const monthIngresos = incomeEntries.filter(e => e.date.slice(0,7) === mk).sort((a,b)=> b.date.localeCompare(a.date));
+
+  const totalGastos = monthGastos.reduce((s,e)=> s+e.amount, 0);
+  const totalIngresos = monthIngresos.reduce((s,e)=> s+e.amount, 0);
+  const neto = totalIngresos - totalGastos;
+
+  const {whole, cents} = formatMoney(Math.abs(neto));
+  document.getElementById("flujo-neto").innerHTML =
+    (neto < 0 ? "-S/ " : "S/ ") + whole + '<span class="cents">.' + cents + '</span>';
+  document.getElementById("flujo-neto").style.color = neto < 0 ? "var(--rose)" : "var(--text)";
+  document.getElementById("flujo-meta").textContent =
+    "Ingresos S/" + totalIngresos.toFixed(0) + " · Gastos S/" + totalGastos.toFixed(0);
+
+  const maxFlow = Math.max(totalIngresos, totalGastos, 1);
+  const barsEl = document.getElementById("flow-bars");
+  barsEl.innerHTML = `
+    <div class="flow-item">
+      <div class="flow-val">S/ ${totalIngresos.toFixed(0)}</div>
+      <div class="flow-bar ingreso" style="height:${Math.max(totalIngresos/maxFlow*100,4)}%"></div>
+      <div class="flow-label">Ingresos</div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-val">S/ ${totalGastos.toFixed(0)}</div>
+      <div class="flow-bar gasto" style="height:${Math.max(totalGastos/maxFlow*100,4)}%"></div>
+      <div class="flow-label">Gastos</div>
+    </div>
+  `;
+
+  const listEl = document.getElementById("ingresos-list");
+  document.getElementById("ingresos-count").textContent = monthIngresos.length + " reg.";
+  listEl.innerHTML = "";
+  if(monthIngresos.length === 0){
+    listEl.innerHTML = '<div class="empty-msg">Aún no registras ingresos este mes.</div>';
+  } else {
+    monthIngresos.forEach(e=>{
+      const row = document.createElement("div");
+      row.className = "entry";
+      const day = new Date(e.date).toLocaleDateString('es-PE', {day:'2-digit', month:'2-digit'});
+      row.innerHTML = `
+        <div class="desc">
+          <div class="d">${escapeHtml(e.desc || "(sin descripción)")}</div>
+          <div class="c">${escapeHtml(e.tipo)} · ${day}</div>
+        </div>
+        <div class="amt" style="color:var(--gold);">S/ ${e.amount.toFixed(2)}</div>
+        <button class="del" data-id="${e.id}">✕</button>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+
+  renderAhorroChart();
+  renderInversiones();
+}
+
+function renderAhorroChart(){
+  const byMonthGasto = {};
+  entries.forEach(e=>{ const m = e.date.slice(0,7); byMonthGasto[m] = (byMonthGasto[m]||0) + e.amount; });
+  const byMonthIngreso = {};
+  incomeEntries.forEach(e=>{ const m = e.date.slice(0,7); byMonthIngreso[m] = (byMonthIngreso[m]||0) + e.amount; });
+
+  const allMonths = [...new Set([...Object.keys(byMonthGasto), ...Object.keys(byMonthIngreso)])].sort();
+  const chartEl = document.getElementById("ahorro-chart");
+  chartEl.innerHTML = "";
+  if(allMonths.length === 0){
+    chartEl.innerHTML = '<div class="empty-msg">Aún no hay datos.</div>';
+    return;
+  }
+  const netos = allMonths.map(m => (byMonthIngreso[m]||0) - (byMonthGasto[m]||0));
+  const max = Math.max(1, ...netos.map(n=> Math.abs(n)));
+
+  allMonths.forEach((mk2, idx)=>{
+    const val = netos[idx];
+    const [y, m] = mk2.split("-");
+    const heightPct = Math.max(Math.abs(val)/max*100, 4);
+    const item = document.createElement("div");
+    item.className = "col-item";
+    item.innerHTML = `
+      <div class="col-val" style="color:${val < 0 ? 'var(--rose)' : 'var(--text-dim)'}">${val < 0 ? '-' : ''}${Math.abs(val).toFixed(0)}</div>
+      <div class="col-bar" style="height:${heightPct}%; background:${val < 0 ? 'linear-gradient(180deg, var(--rose), #7a3e42)' : 'linear-gradient(180deg, var(--gold), #8E7024)'}"></div>
+      <div class="col-label">${MES_ABBR[parseInt(m,10)-1]}<br>${y.slice(2)}</div>
+    `;
+    chartEl.appendChild(item);
+  });
+}
+
+function computeInvestmentValue(inv, atDate){
+  const start = new Date(inv.fechaInicio);
+  const years = Math.max(0, (atDate - start) / (1000*60*60*24*365));
+  return inv.montoInicial * Math.pow(1 + inv.tea/100, years);
+}
+
+function renderInversiones(){
+  const listEl = document.getElementById("inversiones-list");
+  listEl.innerHTML = "";
+  if(investments.length === 0){
+    listEl.innerHTML = '<div class="empty-msg">Aún no registras ningún plazo fijo.</div>';
+    return;
+  }
+  const today = new Date();
+
+  investments.forEach(inv=>{
+    const valorActual = computeInvestmentValue(inv, today);
+    const ganancia = valorActual - inv.montoInicial;
+
+    const card = document.createElement("div");
+    card.className = "inv-card";
+
+    const start = new Date(inv.fechaInicio);
+    const venc = inv.fechaVencimiento ? new Date(inv.fechaVencimiento) : null;
+    const monthsElapsed = Math.max(1, Math.round((today - start) / (1000*60*60*24*30.44)));
+    const monthsToVenc = venc ? Math.max(monthsElapsed, Math.round((venc - start) / (1000*60*60*24*30.44))) : monthsElapsed;
+    const totalMonths = Math.max(monthsToVenc, monthsElapsed, 1);
+
+    const points = [];
+    for(let m = 0; m <= totalMonths; m++){
+      const d = new Date(start);
+      d.setMonth(d.getMonth() + m);
+      points.push({ m, value: computeInvestmentValue(inv, d), future: d > today });
+    }
+    const maxVal = Math.max(...points.map(p=> p.value));
+    const minVal = Math.min(...points.map(p=> p.value));
+    const range = Math.max(maxVal - minVal, 1);
+
+    const w = 280, h = 70;
+    const solidPts = points.filter(p=> !p.future);
+    const futurePts = points.filter(p=> p.future);
+    const toXY = (p)=>{
+      const x = (p.m / totalMonths) * w;
+      const y = h - ((p.value - minVal) / range) * (h - 8) - 4;
+      return x.toFixed(1) + "," + y.toFixed(1);
+    };
+    const solidPath = solidPts.map(toXY).join(" ");
+    const futurePath = futurePts.length ? [solidPts[solidPts.length-1], ...futurePts].map(toXY).join(" ") : "";
+
+    card.innerHTML = `
+      <div class="inv-head">
+        <div>
+          <div class="inv-entidad">${escapeHtml(inv.entidad || "Plazo fijo")}</div>
+          <div class="inv-tea">TEA ${Number(inv.tea).toFixed(2)}%</div>
+        </div>
+        <button class="inv-del" data-id="${inv.id}">✕</button>
+      </div>
+      <div class="inv-values">
+        <div class="col">
+          <div class="lab">Monto inicial</div>
+          <div class="val">S/ ${inv.montoInicial.toFixed(2)}</div>
+        </div>
+        <div class="col">
+          <div class="lab">Ganancia</div>
+          <div class="val gain">+S/ ${ganancia.toFixed(2)}</div>
+        </div>
+        <div class="col right">
+          <div class="lab">Valor actual</div>
+          <div class="val">S/ ${valorActual.toFixed(2)}</div>
+        </div>
+      </div>
+      <div class="inv-chart">
+        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+          <polyline points="${solidPath}" fill="none" stroke="var(--gold)" stroke-width="2.5" />
+          ${futurePath ? '<polyline points="'+futurePath+'" fill="none" stroke="var(--gold)" stroke-width="2" stroke-dasharray="4 4" opacity="0.55" />' : ''}
+        </svg>
+      </div>
+    `;
+    listEl.appendChild(card);
+  });
+}
+
+let taxiMonthDate = new Date();
+taxiMonthDate.setDate(1);
+
+function renderTaxi(){
+  const mk = monthKey(taxiMonthDate);
+  document.getElementById("taxi-month-label").textContent =
+    MESES[taxiMonthDate.getMonth()] + " " + taxiMonthDate.getFullYear();
+
+  const taxiIngresos = incomeEntries.filter(e => e.date.slice(0,7) === mk && e.tipo === "Taxi");
+  const taxiGastos = entries.filter(e => e.date.slice(0,7) === mk && getArea(e.category) === "Taxi");
+
+  const totalIngresos = taxiIngresos.reduce((s,e)=> s+e.amount, 0);
+  const totalGastos = taxiGastos.reduce((s,e)=> s+e.amount, 0);
+  const neto = totalIngresos - totalGastos;
+
+  const {whole, cents} = formatMoney(Math.abs(neto));
+  document.getElementById("taxi-neto").innerHTML =
+    (neto < 0 ? "-S/ " : "S/ ") + whole + '<span class="cents">.' + cents + '</span>';
+  document.getElementById("taxi-neto").style.color = neto < 0 ? "var(--rose)" : "var(--text)";
+  document.getElementById("taxi-meta").textContent =
+    "Ingresos S/" + totalIngresos.toFixed(0) + " · Gastos S/" + totalGastos.toFixed(0);
+
+  const maxFlow = Math.max(totalIngresos, totalGastos, 1);
+  document.getElementById("taxi-flow-bars").innerHTML = `
+    <div class="flow-item">
+      <div class="flow-val">S/ ${totalIngresos.toFixed(0)}</div>
+      <div class="flow-bar ingreso" style="height:${Math.max(totalIngresos/maxFlow*100,4)}%"></div>
+      <div class="flow-label">Ingresos</div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-val">S/ ${totalGastos.toFixed(0)}</div>
+      <div class="flow-bar gasto" style="height:${Math.max(totalGastos/maxFlow*100,4)}%"></div>
+      <div class="flow-label">Gastos</div>
+    </div>
+  `;
+
+  const combined = [
+    ...taxiIngresos.map(e => Object.assign({}, e, { kind: "ingreso" })),
+    ...taxiGastos.map(e => Object.assign({}, e, { kind: "gasto" }))
+  ].sort((a,b)=> b.date.localeCompare(a.date));
+
+  document.getElementById("taxi-count").textContent = combined.length + " reg.";
+  const listEl = document.getElementById("taxi-list");
+  listEl.innerHTML = "";
+  if(combined.length === 0){
+    listEl.innerHTML = '<div class="empty-msg">Aún no registras nada de taxi este mes.</div>';
+  } else {
+    combined.forEach(e=>{
+      const row = document.createElement("div");
+      row.className = "entry";
+      const day = new Date(e.date).toLocaleDateString('es-PE', {day:'2-digit', month:'2-digit'});
+      const isIngreso = e.kind === "ingreso";
+      row.innerHTML = `
+        <div class="desc">
+          <div class="d">${escapeHtml(e.desc || "(sin descripción)")}</div>
+          <div class="c">${isIngreso ? "Ingreso" : escapeHtml(e.category)} · ${day}</div>
+        </div>
+        <div class="amt" style="color:${isIngreso ? 'var(--gold)' : 'var(--text)'}">${isIngreso ? '+' : '-'}S/ ${e.amount.toFixed(2)}</div>
+        <button class="del" data-id="${e.id}" data-kind="${e.kind}">✕</button>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+
+  const byCat = {};
+  taxiGastos.forEach(e=>{ byCat[e.category] = (byCat[e.category]||0) + e.amount; });
+  renderBarGroup("taxi-bars-cat", byCat, totalGastos, "blue");
+}
+
 function escapeHtml(str){
   const d = document.createElement("div");
   d.textContent = str;
   return d.innerHTML;
 }
+
+document.getElementById("open-newcat").addEventListener("click", ()=>{
+  const panel = document.getElementById("newcat-panel");
+  panel.style.display = panel.style.display === "none" ? "" : "none";
+  document.getElementById("newcat-nombre").focus();
+});
+
+document.getElementById("cancel-newcat").addEventListener("click", ()=>{
+  document.getElementById("newcat-panel").style.display = "none";
+  document.getElementById("newcat-nombre").value = "";
+  document.getElementById("newcat-area-custom").value = "";
+  document.getElementById("newcat-area-custom-row").style.display = "none";
+});
+
+document.getElementById("newcat-area").addEventListener("change", (e)=>{
+  document.getElementById("newcat-area-custom-row").style.display = e.target.value === "__new__" ? "" : "none";
+});
+
+document.getElementById("save-newcat").addEventListener("click", async ()=>{
+  const nombreInput = document.getElementById("newcat-nombre");
+  const areaSelect = document.getElementById("newcat-area");
+  const areaCustomInput = document.getElementById("newcat-area-custom");
+
+  const nombre = nombreInput.value.trim();
+  if(!nombre){
+    nombreInput.style.borderColor = "var(--rose)";
+    setTimeout(()=> nombreInput.style.borderColor = "", 800);
+    return;
+  }
+  if(allCategoryNames().some(n => n.toLowerCase() === nombre.toLowerCase())){
+    alert("Ya existe una categoría con ese nombre.");
+    return;
+  }
+
+  const area = areaSelect.value === "__new__" ? areaCustomInput.value.trim() : areaSelect.value;
+  if(!area){
+    areaCustomInput.style.borderColor = "var(--rose)";
+    setTimeout(()=> areaCustomInput.style.borderColor = "", 800);
+    return;
+  }
+
+  const newCat = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    nombre: nombre,
+    area: area
+  };
+  customCategories.push(newCat);
+
+  nombreInput.value = "";
+  areaCustomInput.value = "";
+  document.getElementById("newcat-area-custom-row").style.display = "none";
+  document.getElementById("newcat-panel").style.display = "none";
+
+  await persistCustomCategories();
+  await sendToSheet(Object.assign({ action: "add", type: "categorias" }, newCat));
+  refreshCategorySelects();
+  document.getElementById("in-cat").value = nombre;
+});
 
 document.getElementById("add-entry").addEventListener("click", async ()=>{
   const amountInput = document.getElementById("in-amount");
@@ -970,8 +1613,187 @@ document.getElementById("entries-list").addEventListener("click", async (e)=>{
   const id = btn.getAttribute("data-id");
   entries = entries.filter(x=> x.id !== id);
   await persistEntries();
-  await sendToSheet({ action: "delete", id: id });
+  await sendToSheet({ action: "delete", id: id, type: "gastos" });
   render();
+});
+
+document.getElementById("add-ingreso").addEventListener("click", async ()=>{
+  const amountInput = document.getElementById("in-ingreso-amount");
+  const descInput = document.getElementById("in-ingreso-desc");
+  const tipoInput = document.getElementById("in-ingreso-tipo");
+
+  const amount = parseFloat(amountInput.value);
+  if(!amount || amount <= 0){
+    amountInput.focus();
+    amountInput.style.borderColor = "var(--rose)";
+    setTimeout(()=> amountInput.style.borderColor = "", 800);
+    return;
+  }
+
+  const now = new Date();
+  now.setFullYear(flujoMonthDate.getFullYear(), flujoMonthDate.getMonth(), Math.min(now.getDate(), 28));
+
+  const newEntry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    amount: amount,
+    desc: descInput.value.trim(),
+    tipo: tipoInput.value,
+    date: now.toISOString()
+  };
+  incomeEntries.push(newEntry);
+
+  amountInput.value = "";
+  descInput.value = "";
+  await persistIncome();
+  await sendToSheet(Object.assign({ action: "add", type: "ingresos" }, newEntry));
+  renderFlujo();
+  descInput.focus();
+});
+
+document.getElementById("ingresos-list").addEventListener("click", async (e)=>{
+  const btn = e.target.closest(".del");
+  if(!btn) return;
+  const id = btn.getAttribute("data-id");
+  incomeEntries = incomeEntries.filter(x=> x.id !== id);
+  await persistIncome();
+  await sendToSheet({ action: "delete", id: id, type: "ingresos" });
+  renderFlujo();
+});
+
+document.getElementById("add-inversion").addEventListener("click", async ()=>{
+  const entidadInput = document.getElementById("inv-entidad");
+  const montoInput = document.getElementById("inv-monto");
+  const teaInput = document.getElementById("inv-tea");
+  const fechaInicioInput = document.getElementById("inv-fecha-inicio");
+  const fechaVencInput = document.getElementById("inv-fecha-venc");
+
+  const monto = parseFloat(montoInput.value);
+  const tea = parseFloat(teaInput.value);
+  if(!monto || monto <= 0 || isNaN(tea)){
+    montoInput.style.borderColor = "var(--rose)";
+    teaInput.style.borderColor = "var(--rose)";
+    setTimeout(()=>{ montoInput.style.borderColor = ""; teaInput.style.borderColor = ""; }, 800);
+    return;
+  }
+
+  const fechaInicio = fechaInicioInput.value || new Date().toISOString().slice(0,10);
+
+  const newInv = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    entidad: entidadInput.value.trim(),
+    montoInicial: monto,
+    tea: tea,
+    fechaInicio: fechaInicio,
+    fechaVencimiento: fechaVencInput.value || ""
+  };
+  investments.push(newInv);
+
+  entidadInput.value = "";
+  montoInput.value = "";
+  teaInput.value = "";
+  fechaInicioInput.value = "";
+  fechaVencInput.value = "";
+
+  await persistInvestments();
+  await sendToSheet(Object.assign({ action: "add", type: "inversiones" }, newInv));
+  renderInversiones();
+});
+
+document.getElementById("inversiones-list").addEventListener("click", async (e)=>{
+  const btn = e.target.closest(".inv-del");
+  if(!btn) return;
+  const id = btn.getAttribute("data-id");
+  investments = investments.filter(x=> x.id !== id);
+  await persistInvestments();
+  await sendToSheet({ action: "delete", id: id, type: "inversiones" });
+  renderInversiones();
+});
+
+document.getElementById("prev-month-taxi").addEventListener("click", ()=>{
+  taxiMonthDate.setMonth(taxiMonthDate.getMonth()-1);
+  renderTaxi();
+});
+document.getElementById("next-month-taxi").addEventListener("click", ()=>{
+  taxiMonthDate.setMonth(taxiMonthDate.getMonth()+1);
+  renderTaxi();
+});
+
+document.getElementById("taxi-add-ingreso").addEventListener("click", async ()=>{
+  const amountInput = document.getElementById("taxi-in-amount");
+  const descInput = document.getElementById("taxi-in-desc");
+
+  const amount = parseFloat(amountInput.value);
+  if(!amount || amount <= 0){
+    amountInput.style.borderColor = "var(--rose)";
+    setTimeout(()=> amountInput.style.borderColor = "", 800);
+    return;
+  }
+
+  const now = new Date();
+  now.setFullYear(taxiMonthDate.getFullYear(), taxiMonthDate.getMonth(), Math.min(now.getDate(), 28));
+
+  const newEntry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    amount: amount,
+    desc: descInput.value.trim(),
+    tipo: "Taxi",
+    date: now.toISOString()
+  };
+  incomeEntries.push(newEntry);
+
+  amountInput.value = "";
+  descInput.value = "";
+  await persistIncome();
+  await sendToSheet(Object.assign({ action: "add", type: "ingresos" }, newEntry));
+  renderTaxi();
+});
+
+document.getElementById("taxi-add-gasto").addEventListener("click", async ()=>{
+  const amountInput = document.getElementById("taxi-gasto-amount");
+  const descInput = document.getElementById("taxi-gasto-desc");
+  const catSelect = document.getElementById("taxi-gasto-cat");
+
+  const amount = parseFloat(amountInput.value);
+  if(!amount || amount <= 0 || !catSelect.value){
+    amountInput.style.borderColor = "var(--rose)";
+    setTimeout(()=> amountInput.style.borderColor = "", 800);
+    return;
+  }
+
+  const now = new Date();
+  now.setFullYear(taxiMonthDate.getFullYear(), taxiMonthDate.getMonth(), Math.min(now.getDate(), 28));
+
+  const newEntry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    amount: amount,
+    desc: descInput.value.trim(),
+    category: catSelect.value,
+    date: now.toISOString()
+  };
+  entries.push(newEntry);
+
+  amountInput.value = "";
+  descInput.value = "";
+  await persistEntries();
+  await sendToSheet(Object.assign({ action: "add", type: "gastos" }, newEntry));
+  renderTaxi();
+});
+
+document.getElementById("taxi-list").addEventListener("click", async (e)=>{
+  const btn = e.target.closest(".del");
+  if(!btn) return;
+  const id = btn.getAttribute("data-id");
+  const kind = btn.getAttribute("data-kind");
+  if(kind === "ingreso"){
+    incomeEntries = incomeEntries.filter(x=> x.id !== id);
+    await persistIncome();
+    await sendToSheet({ action: "delete", id: id, type: "ingresos" });
+  } else {
+    entries = entries.filter(x=> x.id !== id);
+    await persistEntries();
+    await sendToSheet({ action: "delete", id: id, type: "gastos" });
+  }
+  renderTaxi();
 });
 
 document.getElementById("prev-month").addEventListener("click", ()=>{
@@ -990,7 +1812,7 @@ function toCsv(rows){
     const fecha = e.date.slice(0,10);
     const desc = '"' + (e.desc||"").replace(/"/g,'""') + '"';
     const cat = '"' + e.category.replace(/"/g,'""') + '"';
-    const area = '"' + (AREA_MAP[e.category] || "Otro") + '"';
+    const area = '"' + getArea(e.category) + '"';
     lines.push([fecha, desc, cat, area, e.amount.toFixed(2)].join(","));
   });
   return lines.join("\n");
@@ -1017,6 +1839,7 @@ document.getElementById("export-csv").addEventListener("click", ()=>{
 
 (async function init(){
   await loadEntries();
+  refreshCategorySelects();
   render();
 })();
 </script>
