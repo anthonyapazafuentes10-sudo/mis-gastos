@@ -652,6 +652,7 @@
           <option>Fijo (trabajo)</option>
           <option>Extra</option>
         </select>
+        <input id="in-ingreso-mes" type="month" style="flex:0 0 130px;">
       </div>
       <button class="add-btn" id="add-ingreso" style="background:var(--gold);color:#08132A;">+ Registrar ingreso</button>
     </div>
@@ -1247,6 +1248,7 @@ function renderFlujo(){
     const [fy, fm] = flujoMk.split("-");
     flujoMonthDate = new Date(parseInt(fy,10), parseInt(fm,10)-1, 1);
   }
+  document.getElementById("in-ingreso-mes").value = flujoMk;
 
   const monthGastos = entries.filter(e => e.date.slice(0,7) === flujoMk);
   const monthIngresos = incomeEntries.filter(e => e.date.slice(0,7) === flujoMk).sort((a,b)=> b.date.localeCompare(a.date));
@@ -1312,10 +1314,18 @@ document.getElementById("add-ingreso").addEventListener("click", async ()=>{
   const amountInput = document.getElementById("in-ingreso-amount");
   const descInput = document.getElementById("in-ingreso-desc");
   const tipoInput = document.getElementById("in-ingreso-tipo");
+  const mesInput = document.getElementById("in-ingreso-mes");
   const amount = parseFloat(amountInput.value);
   if(!amount || amount <= 0){ amountInput.style.borderColor = "var(--rose)"; setTimeout(()=> amountInput.style.borderColor = "", 800); return; }
+
+  let targetYear = flujoMonthDate.getFullYear(), targetMonth = flujoMonthDate.getMonth();
+  if(mesInput.value){
+    const [my, mm] = mesInput.value.split("-");
+    targetYear = parseInt(my,10); targetMonth = parseInt(mm,10) - 1;
+  }
   const now = new Date();
-  now.setFullYear(flujoMonthDate.getFullYear(), flujoMonthDate.getMonth(), Math.min(now.getDate(), 28));
+  now.setFullYear(targetYear, targetMonth, Math.min(now.getDate(), 28));
+
   const newEntry = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), amount, desc: descInput.value.trim(), tipo: tipoInput.value, date: now.toISOString() };
   incomeEntries.push(newEntry);
   amountInput.value = ""; descInput.value = "";
