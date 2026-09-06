@@ -632,12 +632,12 @@
     </div>
 
     <div class="total-block">
-      <div class="label">Dinero acumulado</div>
+      <div class="label">Balance del mes</div>
       <div class="amount" id="flujo-neto">S/ 0<span class="cents">.00</span></div>
       <div class="meta" id="flujo-meta">Ingresos S/0 · Gastos S/0 este mes</div>
     </div>
 
-    <div class="section-title" style="padding-left:20px;padding-right:20px;"><span>Dinero acumulado por mes (toca un mes)</span></div>
+    <div class="section-title" style="padding-left:20px;padding-right:20px;"><span>Balance por mes (toca un mes)</span></div>
     <div class="col-chart" id="ahorro-chart"></div>
 
     <div class="flow-bars" id="flow-bars"></div>
@@ -652,7 +652,20 @@
           <option>Fijo (trabajo)</option>
           <option>Extra</option>
         </select>
-        <input id="in-ingreso-mes" type="month" style="flex:0 0 130px;">
+        <select id="in-ingreso-mes" style="flex:0 0 110px;">
+          <option value="1">Enero</option>
+          <option value="2">Febrero</option>
+          <option value="3">Marzo</option>
+          <option value="4">Abril</option>
+          <option value="5">Mayo</option>
+          <option value="6">Junio</option>
+          <option value="7">Julio</option>
+          <option value="8">Agosto</option>
+          <option value="9">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
       </div>
       <button class="add-btn" id="add-ingreso" style="background:var(--gold);color:#08132A;">+ Registrar ingreso</button>
     </div>
@@ -740,7 +753,7 @@
 </div>
 
 <script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbyMb37bBC1EMuTBqZMvr_HRW_ivxEmDC1UZ0yZ3XAXQ0EL9kvJzjVXYJJB5HkxcGQ0/exec";
+const SHEET_URL = "";
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const MES_ABBR = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
@@ -1229,9 +1242,6 @@ function renderFlujo(){
   const allMonths = [...new Set([...Object.keys(byMonthGasto), ...Object.keys(byMonthIngreso)])].sort();
 
   function netFor(m){ return (byMonthIngreso[m]||0) - (byMonthGasto[m]||0); }
-  function cumulativeThrough(mk2){
-    return allMonths.filter(m=> m <= mk2).reduce((s,m)=> s + netFor(m), 0);
-  }
 
   if(!selectedFlujoYear){
     selectedFlujoYear = allMonths.length ? allMonths[allMonths.length-1].slice(0,4) : String(new Date().getFullYear());
@@ -1248,17 +1258,17 @@ function renderFlujo(){
     const [fy, fm] = flujoMk.split("-");
     flujoMonthDate = new Date(parseInt(fy,10), parseInt(fm,10)-1, 1);
   }
-  document.getElementById("in-ingreso-mes").value = flujoMk;
+  document.getElementById("in-ingreso-mes").value = String(parseInt(flujoMk.slice(5,7),10));
 
   const monthGastos = entries.filter(e => e.date.slice(0,7) === flujoMk);
   const monthIngresos = incomeEntries.filter(e => e.date.slice(0,7) === flujoMk).sort((a,b)=> b.date.localeCompare(a.date));
   const totalGastosMes = monthGastos.reduce((s,e)=> s+e.amount, 0);
   const totalIngresosMes = monthIngresos.reduce((s,e)=> s+e.amount, 0);
-  const dineroAcumulado = cumulativeThrough(flujoMk);
+  const balanceMes = totalIngresosMes - totalGastosMes;
 
-  const {whole, cents} = formatMoney(Math.abs(dineroAcumulado));
-  document.getElementById("flujo-neto").innerHTML = (dineroAcumulado < 0 ? "-S/ " : "S/ ") + whole + '<span class="cents">.' + cents + '</span>';
-  document.getElementById("flujo-neto").style.color = dineroAcumulado < 0 ? "var(--rose)" : "var(--text)";
+  const {whole, cents} = formatMoney(Math.abs(balanceMes));
+  document.getElementById("flujo-neto").innerHTML = (balanceMes < 0 ? "-S/ " : "S/ ") + whole + '<span class="cents">.' + cents + '</span>';
+  document.getElementById("flujo-neto").style.color = balanceMes < 0 ? "var(--rose)" : "var(--text)";
   document.getElementById("flujo-meta").textContent = "Ingresos S/" + totalIngresosMes.toFixed(0) + " · Gastos S/" + totalGastosMes.toFixed(0) + " este mes";
 
   const maxFlow = Math.max(totalIngresosMes, totalGastosMes, 1);
@@ -1288,15 +1298,15 @@ function renderFlujo(){
 
   const chartEl = document.getElementById("ahorro-chart");
   chartEl.innerHTML = "";
-  const cumValues = monthsOfYear.map(m=> cumulativeThrough(m));
-  const maxAbs = Math.max(1, ...cumValues.map(v=> Math.abs(v)));
+  const netValues = monthsOfYear.map(m=> netFor(m));
+  const maxAbs = Math.max(1, ...netValues.map(v=> Math.abs(v)));
   monthsOfYear.forEach((m2, idx)=>{
-    const val = cumValues[idx];
+    const val = netValues[idx];
     const mm = m2.slice(5,7);
     const hasData = !!(byMonthGasto[m2] || byMonthIngreso[m2]);
-    const heightPct = Math.max(Math.abs(val)/maxAbs*100, 4);
+    const heightPct = hasData ? Math.max(Math.abs(val)/maxAbs*100, 4) : 3;
     const item = document.createElement("div");
-    item.className = "col-item" + (m2 === flujoMk ? " selected" : "") + (!hasData && val === 0 ? " empty" : "");
+    item.className = "col-item" + (m2 === flujoMk ? " selected" : "") + (!hasData ? " empty" : "");
     item.innerHTML = `
       <div class="col-val" style="color:${val < 0 ? 'var(--rose)' : 'var(--text-dim)'}">${val < 0 ? '-' : ''}${Math.abs(val).toFixed(0)}</div>
       <div class="col-bar" style="height:${heightPct}%; background:${val < 0 ? 'linear-gradient(180deg, var(--rose), #7a3e42)' : 'linear-gradient(180deg, var(--gold), #8E7024)'}"></div>
@@ -1318,16 +1328,14 @@ document.getElementById("add-ingreso").addEventListener("click", async ()=>{
   const amount = parseFloat(amountInput.value);
   if(!amount || amount <= 0){ amountInput.style.borderColor = "var(--rose)"; setTimeout(()=> amountInput.style.borderColor = "", 800); return; }
 
-  let targetYear = flujoMonthDate.getFullYear(), targetMonth = flujoMonthDate.getMonth();
-  if(mesInput.value){
-    const [my, mm] = mesInput.value.split("-");
-    targetYear = parseInt(my,10); targetMonth = parseInt(mm,10) - 1;
-  }
+  let targetYear = parseInt(selectedFlujoYear, 10);
+  let targetMonth = parseInt(mesInput.value, 10) - 1;
   const now = new Date();
   now.setFullYear(targetYear, targetMonth, Math.min(now.getDate(), 28));
 
   const newEntry = { id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), amount, desc: descInput.value.trim(), tipo: tipoInput.value, date: now.toISOString() };
   incomeEntries.push(newEntry);
+  flujoMonthDate = new Date(targetYear, targetMonth, 1);
   amountInput.value = ""; descInput.value = "";
   await persistIncome();
   await sendToSheet(Object.assign({ action: "add", type: "ingresos" }, newEntry));
