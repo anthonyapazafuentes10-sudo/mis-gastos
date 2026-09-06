@@ -537,10 +537,9 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" id="tab-gastos">Gastos mensuales</button>
-    <button class="tab-btn" id="tab-resumen">Resumen de gastos</button>
-    <button class="tab-btn" id="tab-flujo">Flujo mensual</button>
-    <button class="tab-btn" id="tab-inversiones">Inversiones</button>
+    <button class="tab-btn active" id="tab-gastos">Gastos</button>
+    <button class="tab-btn" id="tab-resumen">Resumen</button>
+    <button class="tab-btn" id="tab-flujo">Flujo</button>
     <button class="tab-btn" id="tab-auto">Auto</button>
   </div>
 
@@ -626,13 +625,20 @@
 
   <!-- ===================== FLUJO MENSUAL ===================== -->
   <div id="view-flujo" style="display:none;">
-    <div class="month-strip" id="flujo-month-strip"></div>
+    <div class="year-nav">
+      <button id="flujo-prev-year">‹</button>
+      <div class="year-label" id="flujo-year-label">—</div>
+      <button id="flujo-next-year">›</button>
+    </div>
 
     <div class="total-block">
       <div class="label">Dinero acumulado</div>
       <div class="amount" id="flujo-neto">S/ 0<span class="cents">.00</span></div>
       <div class="meta" id="flujo-meta">Ingresos S/0 · Gastos S/0 este mes</div>
     </div>
+
+    <div class="section-title" style="padding-left:20px;padding-right:20px;"><span>Dinero acumulado por mes (toca un mes)</span></div>
+    <div class="col-chart" id="ahorro-chart"></div>
 
     <div class="flow-bars" id="flow-bars"></div>
 
@@ -653,13 +659,7 @@
     <div class="section-title"><span>Ingresos del mes</span><span id="ingresos-count"></span></div>
     <div class="entries" id="ingresos-list"></div>
 
-    <div class="section-title" style="padding-top:6px;"><span>Dinero acumulado por mes</span></div>
-    <div class="col-chart" id="ahorro-chart"></div>
-  </div>
-
-  <!-- ===================== INVERSIONES ===================== -->
-  <div id="view-inversiones" style="display:none;">
-    <div class="section-title" style="padding-top:16px;"><span>Plazo fijo / Inversiones</span></div>
+    <div class="section-title" style="border-top:1px solid var(--border);padding-top:16px;"><span>Plazo fijo / Inversiones</span></div>
 
     <div class="add-form">
       <div class="row">
@@ -731,7 +731,7 @@
     <div class="section-title"><span>Movimientos del mes</span><span id="auto-count"></span></div>
     <div class="entries" id="auto-list"></div>
 
-    <div class="section-title"><span>Ingreso generado por mes</span></div>
+    <div class="section-title"><span>Ganancia neta por mes (ingreso − gasto)</span></div>
     <div class="col-chart" id="auto-ingreso-chart"></div>
   </div>
 
@@ -899,21 +899,18 @@ async function persistAuto(){ try{ await window.storage.set(AUTO_STORAGE_KEY, JS
 document.getElementById("tab-gastos").addEventListener("click", ()=> switchTab("gastos"));
 document.getElementById("tab-resumen").addEventListener("click", ()=> switchTab("resumen"));
 document.getElementById("tab-flujo").addEventListener("click", ()=> switchTab("flujo"));
-document.getElementById("tab-inversiones").addEventListener("click", ()=> switchTab("inversiones"));
 document.getElementById("tab-auto").addEventListener("click", ()=> switchTab("auto"));
 
 function switchTab(tab){
   document.getElementById("view-gastos").style.display = tab === "gastos" ? "" : "none";
   document.getElementById("view-resumen").style.display = tab === "resumen" ? "" : "none";
   document.getElementById("view-flujo").style.display = tab === "flujo" ? "" : "none";
-  document.getElementById("view-inversiones").style.display = tab === "inversiones" ? "" : "none";
   document.getElementById("view-auto").style.display = tab === "auto" ? "" : "none";
-  ["gastos","resumen","flujo","inversiones","auto"].forEach(t=>{
+  ["gastos","resumen","flujo","auto"].forEach(t=>{
     document.getElementById("tab-"+t).classList.toggle("active", t === tab);
   });
   if(tab === "resumen") renderResumen();
-  if(tab === "flujo") renderFlujo();
-  if(tab === "inversiones") renderInversiones();
+  if(tab === "flujo"){ renderFlujo(); renderInversiones(); }
   if(tab === "auto") renderAuto();
 }
 
@@ -960,7 +957,7 @@ function render(){
   renderBars(monthEntries, total);
 
   if(document.getElementById("view-resumen").style.display !== "none") renderResumen();
-  if(document.getElementById("view-flujo").style.display !== "none") renderFlujo();
+  if(document.getElementById("view-flujo").style.display !== "none"){ renderFlujo(); renderInversiones(); }
 }
 
 function renderBars(monthEntries, total){
@@ -1212,60 +1209,50 @@ function renderPie(byCat, total){
 }
 
 /* ============ FLUJO MENSUAL ============ */
-function buildFlujoMonthStrip(){
-  const stripEl = document.getElementById("flujo-month-strip");
-  stripEl.innerHTML = "";
-  const allMk = new Set();
-  entries.forEach(e=> allMk.add(e.date.slice(0,7)));
-  incomeEntries.forEach(e=> allMk.add(e.date.slice(0,7)));
-  allMk.add(monthKey(flujoMonthDate));
-  const nowD = new Date();
-  for(let i=-2;i<=2;i++){
-    const d = new Date(nowD.getFullYear(), nowD.getMonth()+i, 1);
-    allMk.add(monthKey(d));
-  }
-  const months = Array.from(allMk).sort();
-  const selectedMk = monthKey(flujoMonthDate);
-  months.forEach(mk=>{
-    const [y,m] = mk.split("-");
-    const pill = document.createElement("div");
-    pill.className = "month-pill" + (mk === selectedMk ? " selected" : "");
-    pill.textContent = MES_ABBR[parseInt(m,10)-1] + " " + y.slice(2);
-    pill.addEventListener("click", ()=>{
-      flujoMonthDate = new Date(parseInt(y,10), parseInt(m,10)-1, 1);
-      renderFlujo();
-    });
-    stripEl.appendChild(pill);
-    if(mk === selectedMk){
-      setTimeout(()=> pill.scrollIntoView({inline:"center", block:"nearest"}), 0);
-    }
-  });
-}
+let selectedFlujoYear = null;
+
+document.getElementById("flujo-prev-year").addEventListener("click", ()=>{
+  selectedFlujoYear = String(parseInt(selectedFlujoYear,10) - 1);
+  renderFlujo();
+});
+document.getElementById("flujo-next-year").addEventListener("click", ()=>{
+  selectedFlujoYear = String(parseInt(selectedFlujoYear,10) + 1);
+  renderFlujo();
+});
 
 function renderFlujo(){
-  buildFlujoMonthStrip();
-  const mk = monthKey(flujoMonthDate);
-
-  const monthGastos = entries.filter(e => e.date.slice(0,7) === mk);
-  const monthIngresos = incomeEntries.filter(e => e.date.slice(0,7) === mk).sort((a,b)=> b.date.localeCompare(a.date));
-  const totalGastosMes = monthGastos.reduce((s,e)=> s+e.amount, 0);
-  const totalIngresosMes = monthIngresos.reduce((s,e)=> s+e.amount, 0);
-
-  // Dinero acumulado: suma corrida desde el primer mes con datos hasta el mes seleccionado
   const byMonthGasto = {};
   entries.forEach(e=>{ const m = e.date.slice(0,7); byMonthGasto[m] = (byMonthGasto[m]||0) + e.amount; });
   const byMonthIngreso = {};
   incomeEntries.forEach(e=>{ const m = e.date.slice(0,7); byMonthIngreso[m] = (byMonthIngreso[m]||0) + e.amount; });
   const allMonths = [...new Set([...Object.keys(byMonthGasto), ...Object.keys(byMonthIngreso)])].sort();
 
-  let acumulado = 0;
-  const cumByMonth = {};
-  allMonths.forEach(m=>{
-    acumulado += (byMonthIngreso[m]||0) - (byMonthGasto[m]||0);
-    cumByMonth[m] = acumulado;
-  });
-  const dineroAcumulado = cumByMonth[mk] !== undefined ? cumByMonth[mk] :
-    (allMonths.length && mk > allMonths[allMonths.length-1] ? acumulado : 0);
+  function netFor(m){ return (byMonthIngreso[m]||0) - (byMonthGasto[m]||0); }
+  function cumulativeThrough(mk2){
+    return allMonths.filter(m=> m <= mk2).reduce((s,m)=> s + netFor(m), 0);
+  }
+
+  if(!selectedFlujoYear){
+    selectedFlujoYear = allMonths.length ? allMonths[allMonths.length-1].slice(0,4) : String(new Date().getFullYear());
+  }
+  document.getElementById("flujo-year-label").textContent = selectedFlujoYear;
+
+  const monthsOfYear = [];
+  for(let m=1; m<=12; m++){ monthsOfYear.push(selectedFlujoYear + "-" + String(m).padStart(2,"0")); }
+  const monthsWithData = monthsOfYear.filter(m=> byMonthGasto[m] || byMonthIngreso[m]);
+
+  let flujoMk = monthKey(flujoMonthDate);
+  if(!monthsOfYear.includes(flujoMk)){
+    flujoMk = monthsWithData.length ? monthsWithData[monthsWithData.length-1] : monthsOfYear[monthsOfYear.length-1];
+    const [fy, fm] = flujoMk.split("-");
+    flujoMonthDate = new Date(parseInt(fy,10), parseInt(fm,10)-1, 1);
+  }
+
+  const monthGastos = entries.filter(e => e.date.slice(0,7) === flujoMk);
+  const monthIngresos = incomeEntries.filter(e => e.date.slice(0,7) === flujoMk).sort((a,b)=> b.date.localeCompare(a.date));
+  const totalGastosMes = monthGastos.reduce((s,e)=> s+e.amount, 0);
+  const totalIngresosMes = monthIngresos.reduce((s,e)=> s+e.amount, 0);
+  const dineroAcumulado = cumulativeThrough(flujoMk);
 
   const {whole, cents} = formatMoney(Math.abs(dineroAcumulado));
   document.getElementById("flujo-neto").innerHTML = (dineroAcumulado < 0 ? "-S/ " : "S/ ") + whole + '<span class="cents">.' + cents + '</span>';
@@ -1299,24 +1286,26 @@ function renderFlujo(){
 
   const chartEl = document.getElementById("ahorro-chart");
   chartEl.innerHTML = "";
-  if(allMonths.length === 0){
-    chartEl.innerHTML = '<div class="empty-msg">Aún no hay datos.</div>';
-  } else {
-    const maxAbs = Math.max(1, ...allMonths.map(m=> Math.abs(cumByMonth[m])));
-    allMonths.forEach(m2=>{
-      const val = cumByMonth[m2];
-      const [y, mm] = m2.split("-");
-      const heightPct = Math.max(Math.abs(val)/maxAbs*100, 4);
-      const item = document.createElement("div");
-      item.className = "col-item" + (m2 === mk ? " selected" : "");
-      item.innerHTML = `
-        <div class="col-val" style="color:${val < 0 ? 'var(--rose)' : 'var(--text-dim)'}">${val < 0 ? '-' : ''}${Math.abs(val).toFixed(0)}</div>
-        <div class="col-bar" style="height:${heightPct}%; background:${val < 0 ? 'linear-gradient(180deg, var(--rose), #7a3e42)' : 'linear-gradient(180deg, var(--gold), #8E7024)'}"></div>
-        <div class="col-label">${MES_ABBR[parseInt(mm,10)-1]}<br>${y.slice(2)}</div>
-      `;
-      chartEl.appendChild(item);
+  const cumValues = monthsOfYear.map(m=> cumulativeThrough(m));
+  const maxAbs = Math.max(1, ...cumValues.map(v=> Math.abs(v)));
+  monthsOfYear.forEach((m2, idx)=>{
+    const val = cumValues[idx];
+    const mm = m2.slice(5,7);
+    const hasData = !!(byMonthGasto[m2] || byMonthIngreso[m2]);
+    const heightPct = Math.max(Math.abs(val)/maxAbs*100, 4);
+    const item = document.createElement("div");
+    item.className = "col-item" + (m2 === flujoMk ? " selected" : "") + (!hasData && val === 0 ? " empty" : "");
+    item.innerHTML = `
+      <div class="col-val" style="color:${val < 0 ? 'var(--rose)' : 'var(--text-dim)'}">${val < 0 ? '-' : ''}${Math.abs(val).toFixed(0)}</div>
+      <div class="col-bar" style="height:${heightPct}%; background:${val < 0 ? 'linear-gradient(180deg, var(--rose), #7a3e42)' : 'linear-gradient(180deg, var(--gold), #8E7024)'}"></div>
+      <div class="col-label">${MES_ABBR[parseInt(mm,10)-1]}</div>
+    `;
+    item.addEventListener("click", ()=>{
+      flujoMonthDate = new Date(parseInt(selectedFlujoYear,10), parseInt(mm,10)-1, 1);
+      renderFlujo();
     });
-  }
+    chartEl.appendChild(item);
+  });
 }
 
 document.getElementById("add-ingreso").addEventListener("click", async ()=>{
@@ -1501,25 +1490,29 @@ function renderAuto(){
     });
   }
 
-  const byMonthIngreso = {};
-  autoEntries.filter(e=> e.tipo === "ingreso").forEach(e=>{ const m = e.date.slice(0,7); byMonthIngreso[m] = (byMonthIngreso[m]||0) + e.amount; });
-  const months = Object.keys(byMonthIngreso).sort();
+  const byMonthIngresoAll = {};
+  autoEntries.filter(e=> e.tipo === "ingreso").forEach(e=>{ const m = e.date.slice(0,7); byMonthIngresoAll[m] = (byMonthIngresoAll[m]||0) + e.amount; });
+  const byMonthGastoAll = {};
+  autoEntries.filter(e=> e.tipo === "gasto").forEach(e=>{ const m = e.date.slice(0,7); byMonthGastoAll[m] = (byMonthGastoAll[m]||0) + e.amount; });
+  const months = [...new Set([...Object.keys(byMonthIngresoAll), ...Object.keys(byMonthGastoAll)])].sort();
+
   const chartEl = document.getElementById("auto-ingreso-chart");
   chartEl.innerHTML = "";
   if(months.length === 0){
-    chartEl.innerHTML = '<div class="empty-msg">Aún no hay ingresos registrados.</div>';
+    chartEl.innerHTML = '<div class="empty-msg">Aún no hay movimientos registrados.</div>';
   } else {
-    const max = Math.max(1, ...months.map(m=> byMonthIngreso[m]));
-    months.forEach(m2=>{
-      const val = byMonthIngreso[m2];
-      const [y, mm] = m2.split("-");
-      const heightPct = Math.max(val/max*100, 6);
+    const netos = months.map(m => (byMonthIngresoAll[m]||0) - (byMonthGastoAll[m]||0));
+    const max = Math.max(1, ...netos.map(n=> Math.abs(n)));
+    months.forEach((m2, idx)=>{
+      const val = netos[idx];
+      const mm = m2.slice(5,7);
+      const heightPct = Math.max(Math.abs(val)/max*100, 6);
       const item = document.createElement("div");
       item.className = "col-item" + (m2 === mk ? " selected" : "");
       item.innerHTML = `
-        <div class="col-val">${val.toFixed(0)}</div>
-        <div class="col-bar" style="height:${heightPct}%"></div>
-        <div class="col-label">${MES_ABBR[parseInt(mm,10)-1]}<br>${y.slice(2)}</div>
+        <div class="col-val" style="color:${val < 0 ? 'var(--rose)' : 'var(--text-dim)'}">${val < 0 ? '-' : ''}${Math.abs(val).toFixed(0)}</div>
+        <div class="col-bar" style="height:${heightPct}%; background:${val < 0 ? 'linear-gradient(180deg, var(--rose), #7a3e42)' : 'linear-gradient(180deg, var(--gold), #8E7024)'}"></div>
+        <div class="col-label">${MES_ABBR[parseInt(mm,10)-1]}</div>
       `;
       chartEl.appendChild(item);
     });
